@@ -1,3 +1,13 @@
+class Teams:
+    East = ['Chengdu Hunters', 'Guangzhou Charge', 'Hangzhou Spark', 'Los Angeles Valiant',
+            'New York Excelsior', 'Philadelphia Fusion', 'Seoul Dynasty',
+            'Shanghai Dragons', ]
+    West = ['Atlanta Reign', 'Boston Uprising', 'Dallas Fuel', 'Florida Mayhem',
+            'Houston Outlaws', 'London Spitfire', 'Los Angeles Gladiators',
+            'Paris Eternal', 'San Francisco Shock',
+            'Toronto Defiant', 'Vancouver Titans', 'Washington Justice']
+
+
 class Maps:
     Assault = 'Assault'
     Control = 'Control'
@@ -140,6 +150,7 @@ def total_escort_map_distance(map_name, point):
             point_to_check = i
         dist += Maps.map_dist[(map_name, point_to_check)]
     return dist
+
 
 def calc_map_type(map_name):
     return Maps.map_types[map_name]
