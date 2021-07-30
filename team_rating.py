@@ -30,6 +30,7 @@ teams = list(set(list(map_scores['team_one_name'].values) + list(map_scores['tea
 teams = [str(p) for p in teams]
 teams = sorted(teams)
 
+
 # Convert an input row into a row of our sparse matrix
 def map_teams(row_in, teams):
     t1 = row_in[0]
@@ -60,6 +61,7 @@ def lambda_to_alpha(lambda_value, samples):
 # Convert RidgeCV alpha back into a lambda value
 def alpha_to_lambda(alpha_value, samples):
     return (alpha_value * 2.0) / samples
+
 
 # Calculate Regularized Map Type Score
 def calculate_rmts(stint_X_rows, stint_Y_rows, map_type):
@@ -99,17 +101,50 @@ def calculate_rmts(stint_X_rows, stint_Y_rows, map_type):
     rmts['map_type'] = map_type
 
     # Generate a couple of error statistics
+    lambda_picked = alpha_to_lambda(model.alpha_, stint_X_rows.shape[0])
     print('r^2: ', model.score(stint_X_rows, stint_Y_rows))
-    print('lambda: ', alpha_to_lambda(model.alpha_, stint_X_rows.shape[0]))
+    print('lambda: ', lambda_picked)
     print('intercept: ', intercept)
 
     pred = model.predict(stint_X_rows)
     print('MAE: ', metrics.mean_absolute_error(stint_Y_rows, pred))
     print('MSE: ', metrics.mean_squared_error(stint_Y_rows, pred))
     rmts = rmts.sort_values(by='rmsa', ascending=False)
-    print(rmts.head(1000).round(3))
-    return rmts
 
+    ## Closed Form
+    # B = (XtX + lambdaI)^-1 * XtY
+    intercept_row = np.ones((stint_X_rows.shape[0], 1))
+    close_form_stint_x = np.concatenate([stint_X_rows, intercept_row], axis=1)
+    xtx = np.matmul(np.transpose(close_form_stint_x), close_form_stint_x) + lambda_to_alpha(lambda_picked,stint_X_rows.shape[0])  * np.eye(
+        close_form_stint_x.shape[1])
+    xtx_inv = np.linalg.inv(xtx)
+    xty = np.matmul(np.transpose(close_form_stint_x), stint_Y_rows)
+    betas = np.matmul(xtx_inv, xty)
+
+    pred = np.matmul(close_form_stint_x, betas)
+    resid = stint_Y_rows - pred
+
+
+    scalar = 1 / (close_form_stint_x.shape[0] - 40 - 1)
+
+    errs = np.matmul(np.transpose(resid), resid)
+    var = errs * xtx_inv * scalar
+
+    var_map = {}
+    for ind, team in enumerate(team_arr):
+
+        attack_var = var[ind][ind]
+        defend_var = var[ind + len(team_arr)][ind + len(team_arr)]
+        var_map[team[0]] = {'team': team[0], 'attack_variance': attack_var,
+                         'defend_variance': defend_var}
+    variance = pd.DataFrame(var_map.values())
+
+    rmts = rmts.merge(variance, on='team')
+    rmts['rmsa attack stdev'] = np.sqrt(rmts['attack_variance'])
+    rmts['rmsa defend stdev'] = np.sqrt(rmts['defend_variance'])
+    rmts = rmts[['team', 'rmsa attack', 'rmsa attack stdev', 'rmsa defend', 'rmsa defend stdev', 'rmsa', 'map_type']]
+    print(rmts)
+    return rmts
 
 # Generate RMSA for control maps
 control = map_scores[map_scores['map_type'] == Maps.Control]
@@ -135,11 +170,12 @@ all_rmsa = pd.concat([control_rmts, escort_rmts, hybrid_rmts, assault_rmts])
 
 all_rmsa.to_csv('results/rmsa.csv', index=False)
 
+
 def calculate_total_rmsa(group):
     total = group['rmsa'].sum() + group[group['map_type'] == Maps.Control]['rmsa'].sum()
     return pd.Series({'rmsa': total})
 
-total_rmsa = all_rmsa[['team', 'map_type', 'rmsa']].groupby(by='team').apply(calculate_total_rmsa).reset_index().sort_values(by='rmsa', ascending=False)
+
+total_rmsa = all_rmsa[['team', 'map_type', 'rmsa']].groupby(by='team').apply(
+    calculate_total_rmsa).reset_index().sort_values(by='rmsa', ascending=False)
 print(total_rmsa)
-
-
