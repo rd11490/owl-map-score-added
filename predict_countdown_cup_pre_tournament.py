@@ -35,18 +35,14 @@ rmsa_frame = pd.read_csv('results/rmsa.csv')
 rmsa_map = build_rmsa_map(rmsa_frame)
 
 countdown_cup = schedule_frame[
-    (schedule_frame['startDate'] >= '2021-08-01') & (schedule_frame['startDate'] <= '2021-08-14')]
-
-known_results = pd.read_csv('results/manual_results.csv')
-
+    (schedule_frame['startDate'] >= '2021-07-30') & (schedule_frame['startDate'] <= '2021-08-14')]
 
 all_east_results = []
 all_west_results = []
 all_match_results = []
-for i in range(0, 10000):
+for i in range(0, 1000):
     results = predict_matches(countdown_cup, rmsa_map)
     results_frame = pd.DataFrame(results)
-    results_frame = pd.concat([known_results, results_frame], ignore_index=True)
     results_frame['sim'] = i
     all_match_results.append(results_frame)
     east, west = calculate_tournament_table(results_frame)

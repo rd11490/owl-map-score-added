@@ -1,10 +1,8 @@
-import numpy as np
 import pandas as pd
 
 from predict_functions import build_rmsa_map, predict_match
 from utils.constants import Maps, Teams
 import matplotlib.pyplot as plt
-import itertools
 
 rmsa_frame = pd.read_csv('results/rmsa.csv')
 
@@ -17,8 +15,8 @@ week_three_rotation = [Maps.Control, Maps.Assault, Maps.Hybrid, Maps.Escort, Map
 ###
 # Change the values below
 ###
-team_one = Teams.Fusion
-team_two = Teams.Dragons
+team_one = Teams.Spark
+team_two = Teams.Fusion
 map_order = week_one_rotation
 maps_to_win = 3
 num_simulations = 10000
@@ -102,7 +100,8 @@ def plot_histogram(results_arr, maps_to_win):
         y = round(height * num_simulations)
         if y > 0:
             plt.text(rect.get_x() + rect.get_width() / 2, height * 1.01, y, fontweight='bold', ha='center')
-    plt.show()
+    filename = '-'.join('{}-{}'.format(team_one, team_two).split(' '))
+    plt.savefig('./plots/{}'.format(filename))
 
 
 results = []

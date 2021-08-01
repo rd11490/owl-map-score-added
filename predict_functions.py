@@ -1,6 +1,5 @@
 import pandas as pd
 import numpy as np
-
 from utils.constants import Maps, Teams
 
 
@@ -70,16 +69,6 @@ def build_rmsa_map(rmsa_frame):
         rmsa[row['map_type']][row['team']] = {'attack': row['rmsa attack'], 'attack stdev': row['rmsa attack stdev'],
                                               'defend': row['rmsa defend'], 'defend stdev': row['rmsa defend stdev']}
     return rmsa
-
-
-def predict_matches(schedule, rsa_for_lookup):
-    results_arr = []
-    for ind in schedule.index:
-        match = schedule.loc[ind, :]
-        match_result = predict_match(match['team1Name'], match['team2Name'], map_rotation(match['startDate']),
-                                     rsa_for_lookup, 3)
-        results_arr.append(match_result)
-    return results_arr
 
 
 def build_table(teams):
