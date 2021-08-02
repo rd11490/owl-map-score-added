@@ -1,5 +1,6 @@
 import pandas as pd
-from predict_functions import build_rmsa_map, calculate_tournament_table, sort_table, predict_match
+from predict_functions import build_rmsa_map, calculate_tournament_table, sort_table, predict_match, \
+    predict_tournament_cycle
 from utils.constants import Maps, Teams
 
 # Pandas options for better printing
@@ -10,6 +11,7 @@ pd.set_option('display.width', 1000)
 week_one_rotation = [Maps.Control, Maps.Hybrid, Maps.Escort, Maps.Assault, Maps.Control]
 week_two_rotation = [Maps.Control, Maps.Escort, Maps.Assault, Maps.Hybrid, Maps.Control]
 week_three_rotation = [Maps.Control, Maps.Assault, Maps.Hybrid, Maps.Escort, Maps.Control]
+finals_rotation = [Maps.Control, Maps.Assault, Maps.Hybrid, Maps.Escort, Maps.Control, Maps.Hybrid, Maps.Escort]
 
 
 def map_rotation(date):
@@ -20,22 +22,15 @@ def map_rotation(date):
     else:
         return week_one_rotation
 
-def predict_matches(schedule, rsa_for_lookup):
-    results_arr = []
-    for ind in schedule.index:
-        match = schedule.loc[ind, :]
-        match_result = predict_match(match['team1Name'], match['team2Name'], map_rotation(match['startDate']),
-                                     rsa_for_lookup, 3)
-        results_arr.append(match_result)
-    return results_arr
-
 schedule_frame = pd.read_csv('results/2021_league_schedule.csv')
 rmsa_frame = pd.read_csv('results/rmsa.csv')
 
 rmsa_map = build_rmsa_map(rmsa_frame)
 
 countdown_cup = schedule_frame[
-    (schedule_frame['startDate'] >= '2021-08-01') & (schedule_frame['startDate'] <= '2021-08-14')]
+    (schedule_frame['startDate'] >= '2021-08-02') & (schedule_frame['startDate'] <= '2021-08-14')]
+
+countdown_cup['map_rotation'] = countdown_cup['startDate'].apply(map_rotation)
 
 known_results = pd.read_csv('results/manual_results.csv')
 
@@ -43,16 +38,14 @@ known_results = pd.read_csv('results/manual_results.csv')
 all_east_results = []
 all_west_results = []
 all_match_results = []
-for i in range(0, 10000):
-    results = predict_matches(countdown_cup, rmsa_map)
-    results_frame = pd.DataFrame(results)
-    results_frame = pd.concat([known_results, results_frame], ignore_index=True)
-    results_frame['sim'] = i
-    all_match_results.append(results_frame)
-    east, west = calculate_tournament_table(results_frame)
+tournament_results = []
 
-    east = sort_table(east)
-    west = sort_table(west)
+def convert_tournament_lp_to_frame(lp):
+    return pd.DataFrame([{'team': k, 'points': lp[k]}for k in lp.keys()])
+
+for i in range(0, 100):
+    east, west, tournament_lp, results = predict_tournament_cycle(countdown_cup, rmsa_map, known_results)
+    tournament_results.append(convert_tournament_lp_to_frame(tournament_lp))
 
     east['sim_number'] = i
     west['sim_number'] = i
@@ -62,6 +55,7 @@ for i in range(0, 10000):
 
     all_east_results.append(east)
     all_west_results.append(west)
+    all_match_results.append(results)
 
 all_east_results = pd.concat(all_east_results, axis=0)
 all_west_results = pd.concat(all_west_results, axis=0)
@@ -74,7 +68,10 @@ east_avg = east_avg.sort_values(by='rank')
 
 all_results_frame = pd.concat(all_match_results, axis=0)
 res = all_results_frame.groupby(by=['team_one', 'team_two']).mean().reset_index()
-print(res)
+tournament_results = pd.concat(tournament_results, axis=0)
+
+# print(res)
 
 print(west_avg)
 print(east_avg)
+print(tournament_results.groupby(by='team').agg(['mean', 'count']).reset_index())

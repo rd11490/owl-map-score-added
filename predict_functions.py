@@ -3,6 +3,64 @@ import numpy as np
 from utils.constants import Maps, Teams
 
 
+def predict_matches(schedule, rmsa_for_lookup):
+    results_arr = []
+    for ind in schedule.index:
+        match = schedule.loc[ind, :]
+        match_result = predict_match(match['team1Name'], match['team2Name'], match['map_rotation'], rmsa_for_lookup, 3)
+        results_arr.append(match_result)
+    return results_arr
+
+# takes in 2 league tables, outputs dictionary of bonus points
+def predict_tournament(east, west, rmsa_map):
+    week_three_rotation = [Maps.Control, Maps.Assault, Maps.Hybrid, Maps.Escort, Maps.Control]
+    finals_rotation = [Maps.Control, Maps.Assault, Maps.Hybrid, Maps.Escort, Maps.Control, Maps.Hybrid, Maps.Escort]
+
+    east_playins = east.head(4)['team'].values
+    west_playins = west.head(6)['team'].values
+
+    east1 = predict_match(east_playins[0], east_playins[3], week_three_rotation, rmsa_map, 3)
+    east2 = predict_match(east_playins[1], east_playins[2], week_three_rotation, rmsa_map, 3)
+
+    west36 = predict_match(west_playins[2], west_playins[5], week_three_rotation, rmsa_map, 3)
+    west45 = predict_match(west_playins[3], west_playins[4], week_three_rotation, rmsa_map, 3)
+    west1 = predict_match(west_playins[0], west45['winner'], week_three_rotation, rmsa_map, 3)
+    west2 = predict_match(west_playins[0], west36['winner'], week_three_rotation, rmsa_map, 3)
+
+    east1west2 = predict_match(east1['winner'], west2['winner'], week_three_rotation, rmsa_map, 3)
+    east2west1 = predict_match(east2['winner'], west1['winner'], week_three_rotation, rmsa_map, 3)
+
+    losers_round_one = predict_match(east1west2['loser'], east2west1['loser'], week_three_rotation, rmsa_map, 3)
+    winners_finals = predict_match(east1west2['winner'], east2west1['winner'], week_three_rotation, rmsa_map, 3)
+    losers_finals = predict_match(losers_round_one['winner'], winners_finals['loser'], week_three_rotation, rmsa_map, 3)
+    finals = predict_match(winners_finals['winner'], losers_finals['winner'], finals_rotation, rmsa_map, 4)
+
+    return {
+        finals['winner']: 3,
+        finals['loser']: 2,
+        losers_finals['loser']: 1,
+        losers_round_one['loser']: 0
+    }
+
+def predict_tournament_cycle(schedule, rmsa_map, completed_matches=None):
+    results = predict_matches(schedule, rmsa_map)
+    results_frame = pd.DataFrame(results)
+
+    if completed_matches is not None:
+        results_frame = pd.concat([completed_matches, results_frame], ignore_index=True)
+    east, west = calculate_tournament_table(results_frame)
+
+    east = sort_table(east)
+    west = sort_table(west)
+
+    tournament_league_points = predict_tournament(east, west, rmsa_map)
+
+    east['rank'] = list(range(1, len(Teams.East) + 1))
+    west['rank'] = list(range(1, len(Teams.West) + 1))
+
+    return east, west, tournament_league_points, results_frame
+
+
 def predict_match(team_one, team_two, map_order, rmsa, maps_to_win=3):
     # initialize each team to have 0 projected wins
     team_one_projected_wins = 0
@@ -150,6 +208,15 @@ def sort_table(frame):
                               ascending=False)
     frame = frame[
         ['team', 'wins', 'losses', 'map_differential', 'maps_won', 'maps_lost', 'opponent_points',
+         'opponent_differential']]
+    return frame
+
+
+def sort_season_table(frame):
+    frame = frame.sort_values(by=['league_points', 'wins', 'map_differential', 'opponent_points', 'opponent_differential'],
+                              ascending=False)
+    frame = frame[
+        ['team', 'league_points', 'wins', 'losses', 'map_differential', 'maps_won', 'maps_lost', 'opponent_points',
          'opponent_differential']]
     return frame
 

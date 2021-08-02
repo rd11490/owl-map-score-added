@@ -15,8 +15,8 @@ week_three_rotation = [Maps.Control, Maps.Assault, Maps.Hybrid, Maps.Escort, Map
 ###
 # Change the values below
 ###
-team_one = Teams.Spark
-team_two = Teams.Fusion
+team_one = Teams.Gladiators
+team_two = Teams.Justice
 map_order = week_one_rotation
 maps_to_win = 3
 num_simulations = 10000
