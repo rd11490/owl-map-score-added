@@ -28,11 +28,18 @@ rmsa_frame = pd.read_csv('results/rmsa.csv')
 rmsa_map = build_rmsa_map(rmsa_frame)
 
 countdown_cup = schedule_frame[
-    (schedule_frame['startDate'] >= '2021-08-02') & (schedule_frame['startDate'] <= '2021-08-14')]
+    (schedule_frame['startDate'] >= '2021-08-09') & (schedule_frame['startDate'] <= '2021-08-14')]
 
 countdown_cup['map_rotation'] = countdown_cup['startDate'].apply(map_rotation)
 
 known_results = pd.read_csv('results/manual_results.csv')
+
+match_results = pd.read_csv('results/match_results.csv')
+match_results = match_results[match_results['season'] == 2021]
+cycle_results = match_results[match_results['date'] >= '2021/07/29']
+cycle_results = cycle_results[['team_one', 'team_two', 'team_one_map_wins', 'team_two_map_wins', 'winner', 'loser']]
+
+known_results = pd.concat([known_results, cycle_results])
 
 
 all_east_results = []
@@ -41,11 +48,13 @@ all_match_results = []
 tournament_results = []
 
 def convert_tournament_lp_to_frame(lp):
-    return pd.DataFrame([{'team': k, 'points': lp[k]}for k in lp.keys()])
+    return pd.DataFrame([{'team': k, 'points': lp[k]} for k in lp.keys()])
 
-for i in range(0, 100):
+for i in range(0, 10000):
     east, west, tournament_lp, results = predict_tournament_cycle(countdown_cup, rmsa_map, known_results)
-    tournament_results.append(convert_tournament_lp_to_frame(tournament_lp))
+    tournament_frame = convert_tournament_lp_to_frame(tournament_lp)
+    tournament_frame['sim'] = i
+    tournament_results.append(tournament_frame)
 
     east['sim_number'] = i
     west['sim_number'] = i
@@ -66,12 +75,10 @@ east_avg = all_east_results[['team', 'wins', 'losses', 'map_differential', 'rank
 west_avg = west_avg.sort_values(by='rank')
 east_avg = east_avg.sort_values(by='rank')
 
-all_results_frame = pd.concat(all_match_results, axis=0)
-res = all_results_frame.groupby(by=['team_one', 'team_two']).mean().reset_index()
 tournament_results = pd.concat(tournament_results, axis=0)
-
-# print(res)
 
 print(west_avg)
 print(east_avg)
 print(tournament_results.groupby(by='team').agg(['mean', 'count']).reset_index())
+
+tournament_results.to_csv('results/countdown_cup_predictions.csv', index=False)

@@ -143,25 +143,30 @@ def calculate_rmts(stint_X_rows, stint_Y_rows, map_type):
     rmts['rmsa attack stdev'] = np.sqrt(rmts['attack_variance'])
     rmts['rmsa defend stdev'] = np.sqrt(rmts['defend_variance'])
     rmts = rmts[['team', 'rmsa attack', 'rmsa attack stdev', 'rmsa defend', 'rmsa defend stdev', 'rmsa', 'map_type']]
+    rmts['normalized rmsa'] = 100 * ((2 * (rmts['rmsa'] - rmts['rmsa'].min())/(rmts['rmsa'].max()-rmts['rmsa'].min())) - 1)
     print(rmts)
     return rmts
 
 # Generate RMSA for control maps
+print('control')
 control = map_scores[map_scores['map_type'] == Maps.Control]
 control_X, control_Y = extract_X_Y(control)
 control_rmts = calculate_rmts(control_X, control_Y, Maps.Control)
 
 # Generate RMSA for Escort maps
+print('escort')
 escort = map_scores[map_scores['map_type'] == Maps.Escort]
 escort_X, escort_Y = extract_X_Y(escort)
 escort_rmts = calculate_rmts(escort_X, escort_Y, Maps.Escort)
 
 # Generate RMSA for Hybrid maps
+print('hybrid')
 hybrid = map_scores[map_scores['map_type'] == Maps.Hybrid]
 hybrid_X, hybrid_Y = extract_X_Y(hybrid)
 hybrid_rmts = calculate_rmts(hybrid_X, hybrid_Y, Maps.Hybrid)
 
 # Generate RMSA for Assault maps
+print('assault')
 assault = map_scores[map_scores['map_type'] == Maps.Assault]
 assault_X, assault_Y = extract_X_Y(assault)
 assault_rmts = calculate_rmts(assault_X, assault_Y, Maps.Assault)
@@ -172,10 +177,10 @@ all_rmsa.to_csv('results/rmsa.csv', index=False)
 
 
 def calculate_total_rmsa(group):
-    total = group['rmsa'].sum() + group[group['map_type'] == Maps.Control]['rmsa'].sum()
-    return pd.Series({'rmsa': total})
+    total = group['normalized rmsa'].sum() + group[group['map_type'] == Maps.Control]['normalized rmsa'].sum()
+    return pd.Series({'rmsa': total/5})
 
 
-total_rmsa = all_rmsa[['team', 'map_type', 'rmsa']].groupby(by='team').apply(
+total_rmsa = all_rmsa[['team', 'map_type', 'normalized rmsa']].groupby(by='team').apply(
     calculate_total_rmsa).reset_index().sort_values(by='rmsa', ascending=False)
-print(total_rmsa)
+print(round(total_rmsa, 2))

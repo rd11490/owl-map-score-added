@@ -25,7 +25,7 @@ def predict_tournament(east, west, rmsa_map):
     west36 = predict_match(west_playins[2], west_playins[5], week_three_rotation, rmsa_map, 3)
     west45 = predict_match(west_playins[3], west_playins[4], week_three_rotation, rmsa_map, 3)
     west1 = predict_match(west_playins[0], west45['winner'], week_three_rotation, rmsa_map, 3)
-    west2 = predict_match(west_playins[0], west36['winner'], week_three_rotation, rmsa_map, 3)
+    west2 = predict_match(west_playins[1], west36['winner'], week_three_rotation, rmsa_map, 3)
 
     east1west2 = predict_match(east1['winner'], west2['winner'], week_three_rotation, rmsa_map, 3)
     east2west1 = predict_match(east2['winner'], west1['winner'], week_three_rotation, rmsa_map, 3)
@@ -34,6 +34,15 @@ def predict_tournament(east, west, rmsa_map):
     winners_finals = predict_match(east1west2['winner'], east2west1['winner'], week_three_rotation, rmsa_map, 3)
     losers_finals = predict_match(losers_round_one['winner'], winners_finals['loser'], week_three_rotation, rmsa_map, 3)
     finals = predict_match(winners_finals['winner'], losers_finals['winner'], finals_rotation, rmsa_map, 4)
+
+    if len(set([finals['winner'], finals['loser'], losers_finals['loser'], losers_round_one['loser']])) < 4:
+        print('Bad List!')
+        print('first ', finals['winner'])
+        print('second ', finals['loser'])
+        print('third ', losers_finals['loser'])
+        print('fourth ', losers_round_one['loser'])
+        print('\n')
+
 
     return {
         finals['winner']: 3,
@@ -231,7 +240,6 @@ Sum of opponents' map differentials in qualifying matches
 columns = ['team_one', 'team_one_map_wins', 'team_two', 'team_two_map_wins', 'winner', 'loser']
 """
 
-
 def calculate_tournament_table(match_results_frame):
     east_table = build_table(Teams.East)
     west_table = build_table(Teams.West)
@@ -250,3 +258,19 @@ def calculate_tournament_table(match_results_frame):
     west_frame = pd.DataFrame(west_table.values())
 
     return east_frame, west_frame
+
+
+def calculate_joint_table(match_results_frame):
+    table = build_table(Teams.East + Teams.West)
+
+    for ind in match_results_frame.index:
+        row = match_results_frame.loc[ind, :]
+        table = update_table(row, table)
+
+
+    table = calculate_opponent_tie_breakers(table)
+
+    table = pd.DataFrame(table.values())
+
+    return table
+

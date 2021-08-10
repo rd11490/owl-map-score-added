@@ -19,6 +19,7 @@ def label_bars(rects, num_simulations):
         if y > 0:
             plt.text(height + 0.005, rect.get_y() + rect.get_height() / 2, y, fontweight='bold', ha='left', va='center')
 
+
 def calc_ticks(hist):
     min_val = min(hist.index)
     max_val = max(hist.index)
@@ -68,11 +69,36 @@ def plot_team(frame, team, division_size):
 
     plt.savefig('standing_plots/{}'.format(team))
 
+    return 100 * rank_hist / sims
+
+
+west_ranks = []
+east_ranks = []
 
 for team in Teams.West:
     team_results = final_tables_west[final_tables_west['team'] == team][['league_points', 'wins', 'rank']]
-    plot_team(team_results, team, len(Teams.West))
+    ranks = plot_team(team_results, team, len(Teams.West))
+    ranks['team'] = team
+    west_ranks.append(ranks)
 
 for team in Teams.East:
     team_results = final_tables_east[final_tables_east['team'] == team][['league_points', 'wins', 'rank']]
-    plot_team(team_results, team, len(Teams.East))
+    ranks = plot_team(team_results, team, len(Teams.East))
+    ranks['team'] = team
+    east_ranks.append(ranks)
+
+west_ranks = pd.DataFrame(west_ranks)
+east_ranks = pd.DataFrame(east_ranks)
+
+west_ranks = west_ranks.fillna(0.0)
+west_columns = ['team', 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+west_ranks = west_ranks[west_columns]
+west_ranks = west_ranks.sort_values(by=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], ascending=False)
+print(west_ranks)
+
+east_ranks = east_ranks.fillna(0.0)
+east_columns = ['team', 1, 2, 3, 4, 5, 6, 7, 8]
+east_ranks = east_ranks[east_columns]
+east_ranks = east_ranks.sort_values(by=[1, 2, 3, 4, 5, 6, 7, 8], ascending=False)
+
+print(east_ranks)

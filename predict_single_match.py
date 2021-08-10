@@ -15,9 +15,9 @@ week_three_rotation = [Maps.Control, Maps.Assault, Maps.Hybrid, Maps.Escort, Map
 ###
 # Change the values below
 ###
-team_one = Teams.Gladiators
-team_two = Teams.Justice
-map_order = week_one_rotation
+team_one = Teams.Dragons
+team_two = Teams.Charge
+map_order = week_two_rotation
 maps_to_win = 3
 num_simulations = 10000
 
@@ -101,7 +101,7 @@ def plot_histogram(results_arr, maps_to_win):
         if y > 0:
             plt.text(rect.get_x() + rect.get_width() / 2, height * 1.01, y, fontweight='bold', ha='center')
     filename = '-'.join('{}-{}'.format(team_one, team_two).split(' '))
-    plt.savefig('./plots/{}'.format(filename))
+    plt.savefig('./plots/countdown_cup_week_two/{}'.format(filename))
 
 
 results = []

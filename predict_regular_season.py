@@ -57,15 +57,22 @@ rmsa_map = build_rmsa_map(rmsa_frame)
 match_results = pd.read_csv('results/match_results.csv')
 match_results = match_results[match_results['season'] == 2021]
 match_results = match_results[match_results['date'].isin(playoff_dates) == False]
-match_results = match_results[['team_one', 'team_two', 'team_one_map_wins', 'team_two_map_wins', 'winner', 'loser']]
+
+cycle_results = match_results[match_results['date'] >= '2021/07/29']
+
+cycle_results = cycle_results[['team_one', 'team_two', 'team_one_map_wins', 'team_two_map_wins', 'winner', 'loser']]
+season_results = match_results[match_results['date'] < '2021/07/29']
+season_results = season_results[['team_one', 'team_two', 'team_one_map_wins', 'team_two_map_wins', 'winner', 'loser']]
 
 remaining_schedule = schedule_frame[
-    (schedule_frame['startDate'] >= '2021-08-02') & (schedule_frame['startDate'] <= '2021-08-14')]
+    (schedule_frame['startDate'] >= '2021-08-09') & (schedule_frame['startDate'] <= '2021-08-14')]
 
 remaining_schedule['map_rotation'] = remaining_schedule['startDate'].apply(map_rotation)
 
 
 manual_results = pd.read_csv('results/manual_results.csv')
+
+all_cycle_results = pd.concat([manual_results, cycle_results])
 
 bonus_points = {
     'Shanghai Dragons': 8,
@@ -83,14 +90,13 @@ def calculate_league_points(row, total_bonus_points):
     return row['wins'] + bonus
 
 
-season_results = match_results
+
 
 all_east_results = []
 all_west_results = []
 all_match_results = []
 for i in range(0, 10000):
-    east, west, tournament_lp, tourny_results = predict_tournament_cycle(remaining_schedule, rmsa_map, manual_results)
-
+    east, west, tournament_lp, tourny_results = predict_tournament_cycle(remaining_schedule, rmsa_map, all_cycle_results)
     all_results = pd.concat([tourny_results, season_results])
     season_east, season_west = calculate_tournament_table(all_results)
 
