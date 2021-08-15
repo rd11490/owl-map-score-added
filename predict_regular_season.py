@@ -65,7 +65,7 @@ season_results = match_results[match_results['date'] < '2021/07/29']
 season_results = season_results[['team_one', 'team_two', 'team_one_map_wins', 'team_two_map_wins', 'winner', 'loser']]
 
 remaining_schedule = schedule_frame[
-    (schedule_frame['startDate'] >= '2021-08-09') & (schedule_frame['startDate'] <= '2021-08-14')]
+    (schedule_frame['startDate'] >= '2021-08-15') & (schedule_frame['startDate'] <= '2021-08-14')]
 
 remaining_schedule['map_rotation'] = remaining_schedule['startDate'].apply(map_rotation)
 
@@ -99,6 +99,11 @@ for i in range(0, 10000):
     east, west, tournament_lp, tourny_results = predict_tournament_cycle(remaining_schedule, rmsa_map, all_cycle_results)
     all_results = pd.concat([tourny_results, season_results])
     season_east, season_west = calculate_tournament_table(all_results)
+
+    if Teams.Mayhem in tournament_lp.keys():
+        print(i)
+        print(tournament_lp)
+        print(tourny_results)
 
     bonus_lp = {} # need to do a deep copy
     for k in bonus_points.keys():

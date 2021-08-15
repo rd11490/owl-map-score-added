@@ -19,7 +19,7 @@ rmsa_frame = pd.read_csv('results/rmsa.csv')
 rmsa_map = build_rmsa_map(rmsa_frame)
 
 rankings = []
-for i in range(0, 100):
+for i in range(0, 1000):
     results = []
     for map_order in [week_one_rotation, week_two_rotation, week_three_rotation]:
         for combo in match_combos:

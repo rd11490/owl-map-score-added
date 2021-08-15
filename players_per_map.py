@@ -12,6 +12,8 @@ season4 = season4.drop_duplicates()
 def to_player_array(group):
     players = list(group['player_name'])
     players.sort()
+    if len(players) < 6:
+        print(group)
     return pd.Series({
         'player1': players[0],
         'player2': players[1],

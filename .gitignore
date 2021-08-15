@@ -1,3 +1,17 @@
+# Custom
+results/
+plots/
+standing_plots/
+zips/
+
+results/*
+plots/*
+standing_plots/*
+zips/*
+
+.DS_Store
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -37,7 +51,7 @@ MANIFEST
 pip-log.txt
 pip-delete-this-directory.txt
 
-# Unit test / coverage reports
+# Unit explore / coverage reports
 htmlcov/
 .tox/
 .nox/

@@ -28,7 +28,7 @@ rmsa_frame = pd.read_csv('results/rmsa.csv')
 rmsa_map = build_rmsa_map(rmsa_frame)
 
 countdown_cup = schedule_frame[
-    (schedule_frame['startDate'] >= '2021-08-09') & (schedule_frame['startDate'] <= '2021-08-14')]
+    (schedule_frame['startDate'] >= '2021-08-15') & (schedule_frame['startDate'] <= '2021-08-14')]
 
 countdown_cup['map_rotation'] = countdown_cup['startDate'].apply(map_rotation)
 
@@ -69,11 +69,16 @@ for i in range(0, 10000):
 all_east_results = pd.concat(all_east_results, axis=0)
 all_west_results = pd.concat(all_west_results, axis=0)
 
+all_east_results.to_csv('results/cc_sim_results_east.csv', index=False)
+all_west_results.to_csv('results/cc_sim_results_west.csv', index=False)
+
 west_avg = all_west_results[['team', 'wins', 'losses', 'map_differential', 'rank']].groupby('team').mean().reset_index()
 east_avg = all_east_results[['team', 'wins', 'losses', 'map_differential', 'rank']].groupby('team').mean().reset_index()
 
 west_avg = west_avg.sort_values(by='rank')
 east_avg = east_avg.sort_values(by='rank')
+
+
 
 tournament_results = pd.concat(tournament_results, axis=0)
 
