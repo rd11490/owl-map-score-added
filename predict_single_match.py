@@ -11,14 +11,15 @@ rmsa_map = build_rmsa_map(rmsa_frame)
 week_one_rotation = [Maps.Control, Maps.Hybrid, Maps.Escort, Maps.Assault, Maps.Control]
 week_two_rotation = [Maps.Control, Maps.Escort, Maps.Assault, Maps.Hybrid, Maps.Control]
 week_three_rotation = [Maps.Control, Maps.Assault, Maps.Hybrid, Maps.Escort, Maps.Control]
+finals_rotation = [Maps.Control, Maps.Assault, Maps.Hybrid, Maps.Escort, Maps.Control, Maps.Hybrid, Maps.Escort]
 
 ###
 # Change the values below
 ###
-team_one = Teams.Charge
-team_two = Teams.Spark
-map_order = week_three_rotation
-maps_to_win = 3
+team_one = Teams.Gladiators
+team_two = Teams.Hunters
+map_order = finals_rotation
+maps_to_win = 4
 num_simulations = 10000
 
 
@@ -101,7 +102,7 @@ def plot_histogram(results_arr, maps_to_win):
         if y > 0:
             plt.text(rect.get_x() + rect.get_width() / 2, height * 1.01, y, fontweight='bold', ha='center')
     filename = '-'.join('{}-{}'.format(team_one, team_two).split(' '))
-    plt.savefig('./plots/countdown_cup_week_three/{}'.format(filename))
+    plt.savefig('./plots/countdown_cup/finals-{}'.format(filename))
 
 
 results = []

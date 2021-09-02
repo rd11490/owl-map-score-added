@@ -37,4 +37,6 @@ for i in range(0, 1000):
 ranking_avg = pd.concat(rankings).groupby('team').mean().reset_index()
 ranking_avg['relative strength'] = ranking_avg['wins']/(ranking_avg['wins'] + ranking_avg['losses'])
 ranking_avg = ranking_avg.sort_values(by='relative strength', ascending=False)
-print(ranking_avg[['team', 'relative strength', 'rank']])
+ranking_avg = ranking_avg.rename(columns={'rank': 'average rank'})
+ranking_avg['rank'] = list(range(1,21))
+print(ranking_avg[['rank', 'team', 'relative strength', 'average rank']])

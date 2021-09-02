@@ -134,3 +134,5 @@ rmsa['rank'] = rmsa['rmsa'].rank(ascending=False)
 rmsa = rmsa[['rank', 'player', 'rmsa', 'rmsa attack', 'rmsa defend']]
 print(rmsa)
 
+rmsa.to_csv('results/player_rating.csv', index=False)
+

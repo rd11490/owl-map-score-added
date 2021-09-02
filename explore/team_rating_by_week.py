@@ -3,6 +3,7 @@ import numpy as np
 from sklearn.linear_model import RidgeCV
 from sklearn import metrics
 
+
 from utils.constants import Maps
 
 # Pandas options for better printing
@@ -11,10 +12,14 @@ pd.set_option('display.max_rows', 1000)
 pd.set_option('display.width', 1000)
 
 # Read in our scored maps generated in the map_score script
-map_scores = pd.read_csv('results/scored_maps.csv')
+map_scores = pd.read_csv('../results/scored_maps.csv')
 
 # Limit our results to 2021 maps
 map_scores = map_scores[map_scores['season'] == 2021]
+
+map_scores['week_date'] = pd.to_datetime(map_scores['match_date'], infer_datetime_format=True) - pd.to_timedelta(2, unit='d')
+map_scores['week'] = map_scores['week_date'].dt.week
+map_scores['week'] = map_scores['week'] - map_scores['week'].min() + 1
 
 # Duplicate and mirror our map scores so that we can get a row for each team on attack and defense on each map
 map_scores_swapped = map_scores.copy(deep=True)
@@ -102,13 +107,7 @@ def calculate_rmts(stint_X_rows, stint_Y_rows, map_type):
 
     # Generate a couple of error statistics
     lambda_picked = alpha_to_lambda(model.alpha_, stint_X_rows.shape[0])
-    print('r^2: ', model.score(stint_X_rows, stint_Y_rows))
-    print('lambda: ', lambda_picked)
-    print('intercept: ', intercept)
 
-    pred = model.predict(stint_X_rows)
-    print('MAE: ', metrics.mean_absolute_error(stint_Y_rows, pred))
-    print('MSE: ', metrics.mean_squared_error(stint_Y_rows, pred))
     rmts = rmts.sort_values(by='rmsa', ascending=False)
 
     ## Closed Form
@@ -144,43 +143,48 @@ def calculate_rmts(stint_X_rows, stint_Y_rows, map_type):
     rmts['rmsa defend stdev'] = np.sqrt(rmts['defend_variance'])
     rmts = rmts[['team', 'rmsa attack', 'rmsa attack stdev', 'rmsa defend', 'rmsa defend stdev', 'rmsa', 'map_type']]
     rmts['normalized rmsa'] = 100 * ((2 * (rmts['rmsa'] - rmts['rmsa'].min())/(rmts['rmsa'].max()-rmts['rmsa'].min())) - 1)
-    print(rmts)
     return rmts
 
-# Generate RMSA for control maps
-print('control')
-control = map_scores[map_scores['map_type'] == Maps.Control]
-control_X, control_Y = extract_X_Y(control)
-control_rmts = calculate_rmts(control_X, control_Y, Maps.Control)
-
-# Generate RMSA for Escort maps
-print('escort')
-escort = map_scores[map_scores['map_type'] == Maps.Escort]
-escort_X, escort_Y = extract_X_Y(escort)
-escort_rmts = calculate_rmts(escort_X, escort_Y, Maps.Escort)
-
-# Generate RMSA for Hybrid maps
-print('hybrid')
-hybrid = map_scores[map_scores['map_type'] == Maps.Hybrid]
-hybrid_X, hybrid_Y = extract_X_Y(hybrid)
-hybrid_rmts = calculate_rmts(hybrid_X, hybrid_Y, Maps.Hybrid)
-
-# Generate RMSA for Assault maps
-print('assault')
-assault = map_scores[map_scores['map_type'] == Maps.Assault]
-assault_X, assault_Y = extract_X_Y(assault)
-assault_rmts = calculate_rmts(assault_X, assault_Y, Maps.Assault)
-
-all_rmsa = pd.concat([control_rmts, escort_rmts, hybrid_rmts, assault_rmts])
-
-all_rmsa.to_csv('results/rmsa.csv', index=False)
-
+weeks = sorted(list(map_scores['week'].unique()))
 
 def calculate_total_rmsa(group):
     total = group['normalized rmsa'].sum() + group[group['map_type'] == Maps.Control]['normalized rmsa'].sum()
     return pd.Series({'rmsa': total/5})
 
+all_total_rmsa = []
+for week in weeks:
+    map_scores_for_rmsa = map_scores[map_scores['week'] <= week]
 
-total_rmsa = all_rmsa[['team', 'map_type', 'normalized rmsa']].groupby(by='team').apply(
-    calculate_total_rmsa).reset_index().sort_values(by='rmsa', ascending=False)
+    # Generate RMSA for control maps
+    control = map_scores_for_rmsa[map_scores_for_rmsa['map_type'] == Maps.Control]
+    control_X, control_Y = extract_X_Y(control)
+    control_rmts = calculate_rmts(control_X, control_Y, Maps.Control)
+
+    # Generate RMSA for Escort maps
+    escort = map_scores_for_rmsa[map_scores_for_rmsa['map_type'] == Maps.Escort]
+    escort_X, escort_Y = extract_X_Y(escort)
+    escort_rmts = calculate_rmts(escort_X, escort_Y, Maps.Escort)
+
+    # Generate RMSA for Hybrid maps
+    hybrid = map_scores_for_rmsa[map_scores_for_rmsa['map_type'] == Maps.Hybrid]
+    hybrid_X, hybrid_Y = extract_X_Y(hybrid)
+    hybrid_rmts = calculate_rmts(hybrid_X, hybrid_Y, Maps.Hybrid)
+
+    # Generate RMSA for Assault maps
+    assault = map_scores_for_rmsa[map_scores_for_rmsa['map_type'] == Maps.Assault]
+    assault_X, assault_Y = extract_X_Y(assault)
+    assault_rmts = calculate_rmts(assault_X, assault_Y, Maps.Assault)
+
+    all_rmsa = pd.concat([control_rmts, escort_rmts, hybrid_rmts, assault_rmts])
+
+    total_rmsa = all_rmsa[['team', 'map_type', 'normalized rmsa']].groupby(by='team').apply(
+        calculate_total_rmsa).reset_index().sort_values(by='rmsa', ascending=False)
+
+    total_rmsa['week'] = week
+    all_total_rmsa.append(total_rmsa)
+
+
+total_rmsa = pd.concat(all_total_rmsa)
+total_rmsa.to_csv('results/total_rmsa.csv', index=False)
+
 print(round(total_rmsa, 2))

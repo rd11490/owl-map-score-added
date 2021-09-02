@@ -8,8 +8,8 @@ pd.set_option('display.max_columns', 500)
 pd.set_option('display.max_rows', 1000)
 pd.set_option('display.width', 1000)
 
-final_tables_west = pd.read_csv('results/sim_results_west.csv')
-final_tables_east = pd.read_csv('results/sim_results_east.csv')
+final_tables_west = pd.read_csv('../results/cc_final_sim_results_west.csv')
+final_tables_east = pd.read_csv('../results/cc_final_sim_results_east.csv')
 
 
 def label_bars(rects, num_simulations):
@@ -67,7 +67,7 @@ def plot_team(frame, team, division_size):
     ticks = calc_ticks(wins_hist)
     plt.yticks(ticks)
 
-    plt.savefig('standing_plots/{}'.format(team))
+    plt.savefig('plots/{}'.format(team))
 
     return 100 * rank_hist / sims
 

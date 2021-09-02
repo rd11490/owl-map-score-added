@@ -11,10 +11,36 @@ def predict_matches(schedule, rmsa_for_lookup):
         results_arr.append(match_result)
     return results_arr
 
+
+def predict_hawaii(east1, east2, west1, west2,rmsa_map, map_rotation):
+    finals_rotation = [Maps.Control, Maps.Assault, Maps.Hybrid, Maps.Escort, Maps.Control, Maps.Hybrid, Maps.Escort]
+
+    east1west2 = predict_match(east1, west2, map_rotation, rmsa_map, 3)
+    east2west1 = predict_match(east2, west1, map_rotation, rmsa_map, 3)
+
+    losers_round_one = predict_match(east1west2['loser'], east2west1['loser'], map_rotation, rmsa_map, 3)
+    winners_finals = predict_match(east1west2['winner'], east2west1['winner'], map_rotation, rmsa_map, 3)
+    losers_finals = predict_match(losers_round_one['winner'], winners_finals['loser'], map_rotation, rmsa_map, 3)
+    finals = predict_match(winners_finals['winner'], losers_finals['winner'], finals_rotation, rmsa_map, 4)
+
+    if len(set([finals['winner'], finals['loser'], losers_finals['loser'], losers_round_one['loser']])) < 4:
+        print('Bad List!')
+        print('first ', finals['winner'])
+        print('second ', finals['loser'])
+        print('third ', losers_finals['loser'])
+        print('fourth ', losers_round_one['loser'])
+        print('\n')
+
+    return {
+        finals['winner']: 3,
+        finals['loser']: 2,
+        losers_finals['loser']: 1,
+        losers_round_one['loser']: 0
+    }
+
 # takes in 2 league tables, outputs dictionary of bonus points
 def predict_tournament(east, west, rmsa_map):
     week_three_rotation = [Maps.Control, Maps.Assault, Maps.Hybrid, Maps.Escort, Maps.Control]
-    finals_rotation = [Maps.Control, Maps.Assault, Maps.Hybrid, Maps.Escort, Maps.Control, Maps.Hybrid, Maps.Escort]
 
     east_playins = east.head(4)['team'].values
     west_playins = west.head(6)['team'].values
@@ -27,29 +53,8 @@ def predict_tournament(east, west, rmsa_map):
     west1 = predict_match(west_playins[0], west45['winner'], week_three_rotation, rmsa_map, 3)
     west2 = predict_match(west_playins[1], west36['winner'], week_three_rotation, rmsa_map, 3)
 
-    east1west2 = predict_match(east1['winner'], west2['winner'], week_three_rotation, rmsa_map, 3)
-    east2west1 = predict_match(east2['winner'], west1['winner'], week_three_rotation, rmsa_map, 3)
+    return predict_hawaii(east1['winner'], east2['winner'], west1['winner'], west2['winner'], rmsa_map, week_three_rotation)
 
-    losers_round_one = predict_match(east1west2['loser'], east2west1['loser'], week_three_rotation, rmsa_map, 3)
-    winners_finals = predict_match(east1west2['winner'], east2west1['winner'], week_three_rotation, rmsa_map, 3)
-    losers_finals = predict_match(losers_round_one['winner'], winners_finals['loser'], week_three_rotation, rmsa_map, 3)
-    finals = predict_match(winners_finals['winner'], losers_finals['winner'], finals_rotation, rmsa_map, 4)
-
-    if len(set([finals['winner'], finals['loser'], losers_finals['loser'], losers_round_one['loser']])) < 4:
-        print('Bad List!')
-        print('first ', finals['winner'])
-        print('second ', finals['loser'])
-        print('third ', losers_finals['loser'])
-        print('fourth ', losers_round_one['loser'])
-        print('\n')
-
-
-    return {
-        finals['winner']: 3,
-        finals['loser']: 2,
-        losers_finals['loser']: 1,
-        losers_round_one['loser']: 0
-    }
 
 def predict_tournament_cycle(schedule, rmsa_map, completed_matches=None):
     results = predict_matches(schedule, rmsa_map)

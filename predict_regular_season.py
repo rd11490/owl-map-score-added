@@ -95,15 +95,10 @@ def calculate_league_points(row, total_bonus_points):
 all_east_results = []
 all_west_results = []
 all_match_results = []
-for i in range(0, 10000):
+for i in range(0, 100):
     east, west, tournament_lp, tourny_results = predict_tournament_cycle(remaining_schedule, rmsa_map, all_cycle_results)
     all_results = pd.concat([tourny_results, season_results])
     season_east, season_west = calculate_tournament_table(all_results)
-
-    if Teams.Mayhem in tournament_lp.keys():
-        print(i)
-        print(tournament_lp)
-        print(tourny_results)
 
     bonus_lp = {} # need to do a deep copy
     for k in bonus_points.keys():
