@@ -3,6 +3,7 @@ results/
 plots/
 standing_plots/
 zips/
+.idea/*
 
 results/*
 plots/*
